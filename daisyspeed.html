@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang=”en”>
+<head>
+  <meta charset=”UTF-8”>
+  <meta name=”viewport” content=”width=device-width, initial-scale=1.0, viewport-fit=cover”>
+  <title>DaisySpeed – Track Anything, Anywhere</title>
+  <!—Firebase SDKs for Google Sign-In (mock fallback) 
+  <script src=https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js></script>
+  <script src=https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js></script>
+  <link href=https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;600;700;800&display=swap rel=”stylesheet”>
+  <style>
+•	{
+      Margin: 0;
+      Padding: 0;
+      Box-sizing: border-box;
+      User-select: none; /* avoid accidental selection on crosshair */
+    }
+    Body {
+      Font-family: ‘Inter’, sans-serif;
+      Background: #0a0f1e;
+      Color: #eef2ff;
+      Overflow-x: hidden;
+      Transition: background 0.2s;
+    }
+    /* Floating flags background (chromatic) */
+    Body::before {
+      Content: “”;
+      Position: fixed;
+      Top: 0;
+      Left: 0;
+      Width: 100%;
+      Height: 100%;
+      Background-image: repeating-linear-gradient(45deg, 
+        Rgba(0,245,192,0.03) 0px, rgba(0,245,192,0.03) 2px,
+        Rgba(255,0,255,0.02) 2px, rgba(255,0,255,0.02) 8px,
+        Rgba(0,255,255,0.02) 8px, rgba(0,255,255,0.02) 12px);
+      Pointer-events: none;
+      z-index: -1;
+    }
+    :root {
+      --neon: #00f5c0;
+    }
+    .container {
+      Max-width: 1000px;
+      Margin: 0 auto;
+      Padding: 16px;
+    }
+    .header {
+      Display: flex;
+      Justify-content: space-between;
+      Align-items: center;
+      Flex-wrap: wrap;
+      Gap: 12px;
+      Margin-bottom: 20px;
+    }
+    .badge-row {
+      Display: flex;
+      Gap: 8px;
+      Align-items: center;
+      Flex-wrap: wrap;
+    }
+    .badge {
+      Background: rgba(0,245,192,0.1);
+      Padding: 4px 12px;
+      Border-radius: 40px;
+      Font-size: 0.7rem;
+      Border: 1px solid rgba(0,245,192,0.3);
+    }
+    .icon-btn {
+      Background: none;
+      Border: none;
+      Font-size: 1.4rem;
+      Cursor: pointer;
+      Padding: 6px 10px;
+      Border-radius: 40px;
+      Color: var(--neon);
+    }
+    /* Bottom Navigation */
+    .nav-bar {
+      Position: fixed;
+      Bottom: 0;
+      Left: 0;
+      Width: 100%;
+      Background: rgba(10,15,30,0.9);
+      Backdrop-filter: blur(12px);
+      Border-top: 1px solid rgba(0,245,192,0.3);
+      Display: flex;
+      Justify-content: space-around;
+      Padding: 8px 0;
+      z-index: 100;
+    }
+    .nav-item {
+      Display: flex;
+      Flex-direction: column;
+      Align-items: center;
+      Background: none;
+      Border: none;
+      Color: #94a3b8;
+      Font-size: 0.7rem;
+      Gap: 4px;
+      Cursor: pointer;
+    }
+    .nav-item.active { color: var(--neon); }
+    .nav-icon { font-size: 1.5rem; }
+    /* Speedometer Card */
+    .speed-card {
+      Background: rgba(0,0,0,0.5);
+      Backdrop-filter: blur(12px);
+      Border-radius: 48px;
+      Padding: 24px;
+      Text-align: center;
+      Border: 1px solid var(--neon);
+      Margin-bottom: 20px;
+    }
+    .speed-value {
+      Font-size: 5rem;
+      Font-weight: 800;
+      Font-family: monospace;
+      Letter-spacing: 4px;
+    }
+    .unit-toggle {
+      Display: flex;
+      Justify-content: center;
+      Gap: 16px;
+      Margin: 16px 0;
+    }
+    /* AR Crosshair container */
+    .ar-container {
+      Position: relative;
+      Background: #000;
+      Border-radius: 32px;
+      Overflow: hidden;
+      Aspect-ratio: 16/9;
+      Margin-bottom: 20px;
+      Border: 2px solid var(--neon);
+    }
+    #cameraFeed {
+      Width: 100%;
+      Height: 100%;
+      Object-fit: cover;
+    }
+    .crosshair {
+      Position: absolute;
+      Top: 50%;
+      Left: 50%;
+      Width: 60px;
+      Height: 60px;
+      Transform: translate(-50%, -50%);
+      Border: 2px solid var(--neon);
+      Border-radius: 50%;
+      Box-shadow: 0 0 0 2px rgba(0,0,0,0.3);
+    }
+    .crosshair::before, .crosshair::after {
+      Content: ‘’;
+      Position: absolute;
+      Background: var(--neon);
+    }
+    .crosshair::before {
+      Top: 50%;
+      Left: 0;
+      Width: 100%;
+      Height: 2px;
+      Transform: translateY(-50%);
+    }
+    .crosshair::after {
+      Top: 0;
+      Left: 50%;
+      Width: 2px;
+      Height: 100%;
+      Transform: translateX(-50%);
+    }
+    .object-label {
+      Position: absolute;
+      Background: rgba(0,0,0,0.7);
+      Color: var(--neon);
+      Padding: 4px 12px;
+      Border-radius: 40px;
+      Font-size: 0.8rem;
+      White-space: nowrap;
+    }
+    Button {
+      Background: rgba(0,245,192,0.2);
+      Border: 1px solid var(--neon);
+      Padding: 8px 16px;
+      Border-radius: 40px;
+      Color: var(--neon);
+      Cursor: pointer;
+    }
+    .hunting-panel {
+      Background: rgba(0,0,0,0.6);
+      Border-radius: 24px;
+      Padding: 16px;
+      Margin-top: 16px;
+    }
+    .nft-banner {
+      Background: linear-gradient(135deg, #00f5c0, #0a8f6e);
+      Color: #0a0f1e;
+      Padding: 10px;
+      Border-radius: 20px;
+      Text-align: center;
+      Margin: 16px 0;
+      Font-weight: bold;
+    }
+    Footer {
+      Margin-top: 40px;
+      Padding: 20px 0;
+      Text-align: center;
+      Font-size: 0.7rem;
+      Border-top: 1px solid rgba(0,245,192,0.2);
+    }
+    .admin-section {
+      Background: rgba(255,100,0,0.15);
+      Border-left: 4px solid #ff6600;
+      Padding: 12px;
+      Border-radius: 16px;
+      Margin-top: 16px;
+    }
+    @media (max-width: 640px) {
+      .speed-value { font-size: 3rem; }
+      .container { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+<div class=”container” id=”appContainer”>
+  <div class=”header”>
+    <h2>🏁 DaisySpeed</h2>
+    <div class=”badge-row”>
+      <span class=”badge”>🎯 AR Crosshair</span>
+      <span class=”badge”>🌙 Night Vision</span>
+      <span class=”badge”>🎙️ Voice</span>
+      <div id=”userWidget”></div>
+      <button class=”icon-btn” id=”settingsBtn”>⚙️</button>
+    </div>
+  </div>
+  <div id=”screenContent”></div>
+  <footer>
+    <a href=https://owensonicinfinity.netlify.app target=”_blank”>OwenSonicInfinity.netlify.app</a> | 
+    <a href=https://owensonicinfinity.github.io target=”_blank”>OwenSonicInfinity.github.io</a><br>
+    Cleveland, Ohio 44089 | owensonicinfinity@gmail.com<br>
+    © 2026 Douglas Owens Jr. All rights reserved.
+  </footer>
+</div>
+
+<div class=”nav-bar”>
+  <button class=”nav-item” data-nav=”home”><span class=”nav-icon”>🏠</span><span>Home</span></button>
+  <button class=”nav-item” data-nav=”speed”><span class=”nav-icon”>📊</span><span>Speed</span></button>
+  <button class=”nav-item” data-nav=”hunt”><span class=”nav-icon”>🏹</span><span>Hunt</span></button>
+  <button class=”nav-item” data-nav=”profile”><span class=”nav-icon”>👤</span><span>Profile</span></button>
+</div>
+
+<script>
+  // Firebase config (mock fallback)
+  Const firebaseConfig = {
+    apiKey: “AIzaSyDummyKeyForDemoOnly”,
+    authDomain: “daisyos-demo.firebaseapp.com”,
+    projectId: “daisyos-demo”,
+  };
+  Let auth;
+  Try {
+    Firebase.initializeApp(firebaseConfig);
+    Auth = firebase.auth();
+  } catch€ { console.warn(“Firebase init failed, using mock auth”); }
+
+  // Global state
+  Let currentUser = null;
+  Let currentScreen = ‘home’;
+  Let speedUnit = ‘mph’; // mph or kmh
+  Let currentSpeed = 0;
+  Let nightVision = false;
+  Let huntingMode = false;
+  Let geminiApiKey = localStorage.getItem(“geminiApiKey”) || “”;
+  Let customBgImage = localStorage.getItem(“customBgImage”) || “”;
+  // Simulated object detection
+  Let detectedObject = null;
+  Let cameraStream = null;
+
+  // Mock portfolio (cars, NFTs)
+  Let userCars = JSON.parse(localStorage.getItem(“userCars”)) || [
+    { name: “Tesla Model S”, year: “2023”, image: “🚗”, priceEth: “0.5” },
+    { name: “Ford Mustang”, year: “2020”, image: “🏎️”, priceEth: “0.3” }
+  ];
+  Let userNFTs = JSON.parse(localStorage.getItem(“userNFTs”)) || [
+    { name: “Cyber Stag #042”, value: “0.8 ETH” },
+    { name: “Speed Demon Trophy”, value: “1.2 ETH” }
+  ];
+
+  // Admin detection
+  Function isAdmin() {
+    If (!currentUser) return false;
+    Const email = (currentUser.email || “”).toLowerCase();
+    Const name = (currentUser.displayName || “”).toLowerCase();
+    Return email === owensonicinfinity@gmail.com || name.includes(“douglas”) || name.includes(“doug”);
+  }
+
+  // Apply background image
+  Function applyBackground() {
+    If (customBgImage && customBgImage.trim() !== “”) {
+      Document.body.style.background = `url(‘${customBgImage}’) center/cover fixed`;
+      Document.body.style.backgroundBlendMode = “overlay”;
+    } else {
+      Document.body.style.background = “”;
+      Document.body.style.backgroundColor = “#0a0f1e”;
+    }
+  }
+
+  // Speed simulation (using device motion or random walk)
+  Function startSpeedSimulation() {
+    If (window.DeviceMotionEvent) {
+      Window.addEventListener(“devicemotion”, € => {
+        Let acc = e.accelerationIncludingGravity;
+        Let speed = Math.abs(acc.x || 0) * 50 + Math.abs(acc.y || 0) * 30;
+        Speed = Math.min(220, Math.max(0, speed));
+        currentSpeed = speedUnit === ‘mph’ ? speed : speed * 1.609;
+        updateSpeedDisplay();
+      });
+    } else {
+      // fallback random walk
+      setInterval(() => {
+        currentSpeed = Math.max(0, currentSpeed + (Math.random() – 0.5) * 5);
+        currentSpeed = Math.min(180, Math.max(0, currentSpeed));
+        updateSpeedDisplay();
+      }, 500);
+    }
+  }
+
+  Function updateSpeedDisplay() {
+    Const speedEl = document.getElementById(“speedValue”);
+    If (speedEl) speedEl.innerText = Math.floor(currentSpeed);
+  }
+
+  // AR Camera & crosshair detection (simulated)
+  Async function startCamera() {
+    Try {
+      Const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      Const video = document.getElementById(“cameraFeed”);
+      If (video) video.srcObject = stream;
+      cameraStream = stream;
+      // Simulate object detection every 2 sec
+      setInterval(() => {
+        const objects = [“Bug”, “Deer”, “Mustang GT”, “Lightning Bug”, “Elk”];
+        detectedObject = objects[Math.floor(Math.random() * objects.length)];
+        const label = document.getElementById(“objectLabel”);
+        if (label) label.innerText = `🎯 ${detectedObject}`;
+      }, 3000);
+    } catch(err) {
+      Console.warn(“Camera access denied”, err);
+      Const video = document.getElementById(“cameraFeed”);
+      If (video) video.style.background = “#111”;
+    }
+  }
+
+  // Voice Control
+  Let recognition;
+  If (‘webkitSpeechRecognition’ in window) {
+    Recognition = new webkitSpeechRecognition();
+    Recognition.continuous = false;
+    Recognition.interimResults = false;
+    Recognition.lang = ‘en-US’;
+  }
+  Function startVoiceCommand() {
+    If (!recognition) { alert(“STT not supported”); return; }
+    Recognition.start();
+    Recognition.onresult = (event) => {
+      Let cmd = event.results[0][0].transcript.toLowerCase();
+      If (cmd.includes(“night vision”)) { nightVision = !nightVision; applyNightVision(); speak(“Night vision toggled”); }
+      Else if (cmd.includes(“hunting mode”)) { huntingMode = !huntingMode; speak(“Hunting mode “ + (huntingMode ? “on” : “off”)); }
+      Else if (cmd.includes(“speed”)) speak(`Current speed is ${Math.floor(currentSpeed)} ${speedUnit}`);
+      Else speak(“Command not recognized”);
+    };
+  }
+  Function applyNightVision() {
+    Const video = document.getElementById(“cameraFeed”);
+    If (video) video.style.filter = nightVision ? “brightness(1.5) contrast(2) hue-rotate(90deg)” : “none”;
+  }
+  Function speak(text) {
+    If (‘speechSynthesis’ in window) {
+      Let utterance = new SpeechSynthesisUtterance(text);
+      Window.speechSynthesis.cancel();
+      Window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  // AI (Gemini) integration for chat
+  Async function callGemini(prompt) {
+    If (!geminiApiKey) return null;
+    Try {
+      Const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`, {
+        Method: “POST”,
+        Headers: { “Content-Type”: “application/json” },
+        Body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+      });
+      Const data = await res.json();
+      Return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
+    } catch€ { return null; }
+  }
+
+  // Render screens
+  Function render() {
+    Const container = document.getElementById(‘screenContent’);
+    If (currentScreen === ‘home’) renderHome(container);
+    Else if (currentScreen === ‘speed’) renderSpeed(container);
+    Else if (currentScreen === ‘hunt’) renderHunt(container);
+    Else if (currentScreen === ‘profile’) renderProfile(container);
+    Document.querySelectorAll(‘.nav-item’).forEach(btn => {
+      If(btn.dataset.nav === currentScreen) btn.classList.add(‘active’);
+      Else btn.classList.remove(‘active’);
+    });
+    updateUserWidget();
+  }
+
+  Function renderHome(container) {
+    Container.innerHTML = `
+      <div class=”nft-banner”>🚀 BET ON RACES & HUNTS – WIN NFTs! 🎰 Your speed records earn crypto. Check your portfolio below.</div>
+      <div class=”speed-card”>
+        <div class=”speed-value”><span id=”speedValue”>0</span> <span id=”unitLabel”>${speedUnit}</span></div>
+        <div class=”unit-toggle”>
+          <button id=”mphBtn” class=”${speedUnit === ‘mph’ ? ‘active’ : ‘’}”>MPH</button>
+          <button id=”kmhBtn” class=”${speedUnit === ‘kmh’ ? ‘active’ : ‘’}”>KM/H</button>
+        </div>
+        <button id=”voiceCmdBtn”>🎤 Voice Control</button>
+        <button id=”nightVisionBtn”>🌙 Night Vision ${nightVision ? ‘ON’ : ‘OFF’}</button>
+      </div>
+      <div class=”ar-container”>
+        <video id=”cameraFeed” autoplay playsinline></video>
+        <div class=”crosshair”></div>
+        <div id=”objectLabel” class=”object-label” style=”bottom:10px; left:10px;”>🔍 Scanning…</div>
+      </div>
+      <div class=”nft-banner”>💎 Sell your car videos & NFTs – 0% fees! Go to Profile > My Garage.</div>
+    `;
+    startCamera();
+    startSpeedSimulation();
+    document.getElementById(“mphBtn”)?.addEventListener(“click”, () => { speedUnit = “mph”; document.getElementById(“unitLabel”).innerText = “mph”; updateSpeedDisplay(); });
+    document.getElementById(“kmhBtn”)?.addEventListener(“click”, () => { speedUnit = “kmh”; document.getElementById(“unitLabel”).innerText = “km/h”; updateSpeedDisplay(); });
+    document.getElementById(“voiceCmdBtn”)?.addEventListener(“click”, startVoiceCommand);
+    document.getElementById(“nightVisionBtn”)?.addEventListener(“click”, () => { nightVision = !nightVision; applyNightVision(); });
+  }
+
+  Function renderSpeed(container) {
+    Container.innerHTML = `
+      <div class=”speed-card”>
+        <h3>Real-time Telemetry</h3>
+        <div class=”speed-value”><span id=”speedValue2”>0</span> <span>${speedUnit}</span></div>
+        <p>G-force: ${(Math.random() * 1.2).toFixed(2)} G</p>
+        <p>Altitude: ${Math.floor(Math.random() * 500)} m</p>
+        <button id=”recordRunBtn”>📹 Record Run (NFT reward)</button>
+      </div>
+      <div class=”nft-banner”>🏆 Top Speed Leaderboard – Win ETH rewards every week!</div>
+    `;
+    Const speedEl = document.getElementById(“speedValue2”);
+    If (speedEl) {
+      setInterval(() => { if (speedEl) speedEl.innerText = Math.floor(currentSpeed); }, 200);
+    }
+    Document.getElementById(“recordRunBtn”)?.addEventListener(“click”, () => {
+      Alert(“Recording started. After race, you can mint a Speed NFT. This will be saved to your portfolio.”);
+    });
+  }
+
+  Function renderHunt(container) {
+    Container.innerHTML = `
+      <div class=”hunting-panel”>
+        <h3>🏹 Hunters Edition</h3>
+        <p>Scat Analysis: Freshness 87%</p>
+        <p>Track Analysis: Hoof print, size medium</p>
+        <p>Predictive movement: Heading NE towards water</p>
+        <button id=”toggleHuntingMode”>${huntingMode ? “Disable” : “Enable”} Hunting Mode</button>
+        <button id=”logKillBtn”>📸 Log Kill (NFT + Leaderboard)</button>
+      </div>
+      <div class=”nft-banner”>🐗 Hunting achievements mint NFTs – trade them on SAYSO marketplace!</div>
+    `;
+    Document.getElementById(“toggleHuntingMode”)?.addEventListener(“click”, () => { huntingMode = !huntingMode; speak(“Hunting mode “ + (huntingMode ? “activated” : “deactivated”)); });
+    Document.getElementById(“logKillBtn”)?.addEventListener(“click”, () => {
+      Let newNFT = { name: `Hunt Trophy ${new Date().toLocaleDateString()}`, value: “0.2 ETH” };
+      userNFTs.push(newNFT);
+      localStorage.setItem(“userNFTs”, JSON.stringify(userNFTs));
+      alert(“Kill logged! NFT added to your portfolio.”);
+    });
+  }
+
+  Function renderProfile(container) {
+    Let carsHtml = userCars.map(c => `<div style=”border-bottom:1px solid var(--neon); padding:8px;”>${c.image} ${c.name} (${c.year}) - ${c.priceEth} ETH <button class=”sellCarBtn” data-name=”${c.name}”>Sell</button></div>`).join(‘’);
+    Let nftsHtml = userNFTs.map(n => `<div>${n.name} – ${n.value}</div>`).join(‘’);
+    Container.innerHTML = `
+      <div class=”card” style=”background:rgba(0,0,0,0.5); border-radius:24px; padding:16px;”>
+        <img src=”${currentUser?.photoURL || ‘https://via.placeholder.com/80’}” style=”width:80px; border-radius:50%;”>
+        <h3>${currentUser?.displayName || “Guest”}</h3>
+        <p>${currentUser?.email || “Sign in to sync portfolio”}</p>
+        <button id=”addCarBtn”>➕ Add Vehicle ($1 fee)</button>
+      </div>
+      <div class=”nft-banner”>💰 My Garage & NFTs – List items for sale</div>
+      <div class=”card”><h3>🚗 My Cars</h3>${carsHtml || “No cars added.”}</div>
+      <div class=”card”><h3>🏆 My NFTs</h3>${nftsHtml || “No NFTs yet.”}</div>
+      <div class=”nft-banner”>🎨 Sell your race videos or car photos. Buyers pay with ETH.</div>
+    `;
+    Document.getElementById(“addCarBtn”)?.addEventListener(“click”, () => {
+      Let carName = prompt(“Car name:”);
+      If (carName) {
+        Alert(“$1 fee will be charged (simulated). Car added.”);
+        userCars.push({ name: carName, year: “2024”, image: “🏎️”, priceEth: “0.1” });
+        localStorage.setItem(“userCars”, JSON.stringify(userCars));
+        renderProfile(container);
+      }
+    });
+    Document.querySelectorAll(“.sellCarBtn”).forEach(btn => {
+      Btn.addEventListener(“click”, € => {
+        Let carName = e.target.dataset.name;
+        Alert(`Listing ${carName} for sale on SAYSO marketplace. Buyers can offer ETH.`);
+      });
+    });
+  }
+
+  // User widget and Google Sign-In
+  Function updateUserWidget() {
+    Const widget = document.getElementById(‘userWidget’);
+    If (currentUser) {
+      Widget.innerHTML = `<img src=”${currentUser.photoURL || ‘https://via.placeholder.com/32’}” style=”width:32px; border-radius:50%;”> <span>${currentUser.displayName || currentUser.email}</span> <button id=”logoutBtn” class=”icon-btn” style=”font-size:0.8rem;”>🚪</button>`;
+      Document.getElementById(‘logoutBtn’)?.addEventListener(‘click’, () => {
+        If(auth) auth.signOut();
+        currentUser = null;
+        localStorage.removeItem(‘daisyUser’);
+        render();
+      });
+    } else {
+      Widget.innerHTML = `<button id=”googleSignInBtn” class=”badge”>🔑 Sign in with Google</button>`;
+      Document.getElementById(‘googleSignInBtn’)?.addEventListener(‘click’, () => {
+        If (auth) {
+          Const provider = new firebase.auth.GoogleAuthProvider();
+          Auth.signInWithPopup(provider).then(result => {
+            currentUser = result.user;
+            localStorage.setItem(‘daisyUser’, JSON.stringify({ displayName: currentUser.displayName, email: currentUser.email, photoURL: currentUser.photoURL }));
+            render();
+          }).catch(err => { alert(“Fallback to mock admin”); mockSignIn(); });
+        } else { mockSignIn(); }
+      });
+    }
+  }
+  Function mockSignIn() {
+    currentUser = { displayName: “Douglas Owens”, email: owensonicinfinity@gmail.com, photoURL: https://via.placeholder.com/80 };
+    localStorage.setItem(‘daisyUser’, JSON.stringify(currentUser));
+    render();
+  }
+
+  // Settings modal with admin options
+  Function openSettings() {
+    Let modalHtml = `
+      <div id=”settingsModal” style=”position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:blur(8px); z-index:1000; display:flex; justify-content:center; align-items:center;”>
+        <div style=”background:#1e293b; border-radius:32px; max-width:500px; width:90%; padding:24px; border:2px solid var(--neon);”>
+          <div style=”display:flex; justify-content:space-between;”><h3>⚙️ Settings</h3><button id=”closeSettingsBtn” style=”background:none; border:none; font-size:1.8rem;”>&times;</button></div>
+          <div><label>Neon Color</label><input type=”color” id=”neonColorPicker” value=”${localStorage.getItem(‘neonColor’) || ‘#00f5c0’}” style=”width:100%;”></div>
+          <div><label>Background Image URL</label><input type=”text” id=”bgImageUrl” value=”${customBgImage}” style=”width:100%;”></div>
+    `;
+    If (isAdmin()) {
+      modalHtml += `<div class=”admin-section”><h4>🔐 Admin Controls</h4>
+        <label>Gemini API Key</label><input type=”password” id=”geminiApiKeyInput” value=”${geminiApiKey}” style=”width:100%;”>
+        <button id=”saveAdminSettings”>Save Key</button>
+        <p class=”badge”>AI will use Gemini for advanced queries.</p></div>`;
+    }
+    modalHtml += `<button id=”closeSettingsBtn2” style=”margin-top:16px;”>Close</button></div></div>`;
+    document.body.insertAdjacentHTML(‘beforeend’, modalHtml);
+    document.getElementById(‘closeSettingsBtn’)?.addEventListener(‘click’, () => document.getElementById(‘settingsModal’)?.remove());
+    document.getElementById(‘closeSettingsBtn2’)?.addEventListener(‘click’, () => document.getElementById(‘settingsModal’)?.remove());
+    document.getElementById(‘neonColorPicker’)?.addEventListener(‘change’, € => {
+      localStorage.setItem(‘neonColor’, e.target.value);
+      document.documentElement.style.setProperty(‘—neon’, e.target.value);
+    });
+    Document.getElementById(‘bgImageUrl’)?.addEventListener(‘change’, € => {
+      customBgImage = e.target.value;
+      localStorage.setItem(‘customBgImage’, customBgImage);
+      applyBackground();
+    });
+    If (isAdmin()) {
+      Document.getElementById(‘saveAdminSettings’)?.addEventListener(‘click’, () => {
+        geminiApiKey = document.getElementById(‘geminiApiKeyInput’).value;
+        localStorage.setItem(‘geminiApiKey’, geminiApiKey);
+        alert(“Gemini key saved. DaisyAI will now use it in chat (coming soon).”);
+      });
+    }
+  }
+
+  // Initialization
+  Document.addEventListener(‘DOMContentLoaded’, () => {
+    Const savedNeon = localStorage.getItem(‘neonColor’);
+    If (savedNeon) document.documentElement.style.setProperty(‘—neon’, savedNeon);
+    customBgImage = localStorage.getItem(“customBgImage”) || “”;
+    applyBackground();
+    const storedUser = localStorage.getItem(‘daisyUser’);
+    if (storedUser) currentUser = JSON.parse(storedUser);
+    render();
+    document.querySelectorAll(‘.nav-item’).forEach(btn => {
+      btn.addEventListener(‘click’, () => {
+        currentScreen = btn.dataset.nav;
+        render();
+      });
+    });
+    Document.getElementById(‘settingsBtn’)?.addEventListener(‘click’, openSettings);
+  });
+</script>
+</body>
+</html>
+
+
+
